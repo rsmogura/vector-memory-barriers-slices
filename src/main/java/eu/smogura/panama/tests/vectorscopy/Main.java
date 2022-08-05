@@ -15,20 +15,21 @@ public class Main {
     private static volatile int size = 1024 * 1024;
 
     public static void main(String[] args) throws Exception {
+        var session = MemorySession.openConfined();
         MemorySegment heapIn = MemorySegment.ofArray(new byte[size]);
         MemorySegment heapOu = MemorySegment.ofArray(new byte[size]);
 
-        MemorySegment directIn = MemorySegment.allocateNative(size, MemorySession.global());
-        MemorySegment directOu = MemorySegment.allocateNative(size, MemorySession.global());
+        MemorySegment directIn = MemorySegment.allocateNative(size, session);
+        MemorySegment directOu = MemorySegment.allocateNative(size, session);
 
 //        Stream<Path> walk = Files.walk(Path.of("/home/rado"));
 //        walk.forEach(p -> {});
         for (int i=0; i < 30_000; i++) {
 //            copyMemoryBytes(heapIn, heapOu, heapOu, heapIn.array());
 //            copyMemoryBytes(directIn, directOu, directOu, null);
-            test2(heapIn, heapOu, heapOu, (byte[]) heapOu.array().get());
-            test2(directIn, directOu, directOu, (byte[]) heapOu.array().get());
-            test3(heapIn, heapOu, heapOu, (byte[]) heapOu.array().get());
+//            test2(heapIn, heapOu, heapOu, (byte[]) heapOu.array().get());
+//            test2(directIn, directOu, directOu, (byte[]) heapOu.array().get());
+//            test3(heapIn, heapOu, heapOu, (byte[]) heapOu.array().get());
             test3(directIn, directOu, directOu, (byte[]) heapOu.array().get());
 
 //            copyMemoryBytes3(heapIn, heapOu, heapOu, heapOu.array());
@@ -122,9 +123,10 @@ public class Main {
     }
 
     public static int test3(MemorySegment in, MemorySegment out, MemorySegment out2, byte[] arr) {
-        for (int i = 0; i < SPECIES_BYTE.loopBound(in.byteSize()); i += SPECIES_BYTE.vectorByteSize()) {
+        long sz = in.byteSize();
+        for (long i = 0; i < SPECIES_BYTE.loopBound(sz); i += SPECIES_BYTE.vectorByteSize()) {
             var v1 = ByteVector.fromMemorySegment(SPECIES_BYTE, in, i, ByteOrder.nativeOrder());
-            arr[i] = (byte) 0;
+//            arr[i] = (byte) 0;
             v1.intoMemorySegment(out, i, ByteOrder.nativeOrder());
         }
 
